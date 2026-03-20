@@ -1,0 +1,5 @@
+name = "image-background-remover-api"
+main = "workers/api/remove.ts"
+compatibility_date = "2026-03-20"
+
+[vars]

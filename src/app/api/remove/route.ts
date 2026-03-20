@@ -38,10 +38,16 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      let errorCode = "API_ERROR";
+      try {
+        const errorData = await response.json();
+        errorCode = errorData.errors?.[0]?.code || "API_ERROR";
+      } catch {
+        // Non-JSON error response
+      }
 
       // Check for rate limit
-      if (response.status === 402 || errorData.errors?.[0]?.code === "rate_limit_exceeded") {
+      if (response.status === 402 || errorCode === "rate_limit_exceeded") {
         return NextResponse.json(
           { success: false, error: "RATE_LIMITED" },
           { status: 402 }
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json(
-        { success: false, error: "API_ERROR" },
+        { success: false, error: errorCode },
         { status: response.status }
       );
     }

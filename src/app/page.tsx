@@ -57,7 +57,7 @@ export default function Home() {
       setStatus("processing");
 
       try {
-        const response = await fetch("/api/remove", {
+        const response = await fetch("https://image-background-remover-api.aletogig99.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: base64 }),
