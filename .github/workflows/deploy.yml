@@ -31,9 +31,6 @@ jobs:
         env:
           REMOVE_BG_API_KEY: ${{ secrets.REMOVE_BG_API_KEY }}
 
-      - name: Setup Wrangler
-        run: pnpm add -D wrangler
-
       - name: Deploy to Cloudflare Pages
         run: pnpm wrangler pages deploy .next --project-name=image-background-remover --branch=production
         env:
