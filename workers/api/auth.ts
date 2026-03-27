@@ -2,7 +2,7 @@ export interface Env {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   AUTH_SECRET: string;
-  DB: D1Database;
+  DB: any;
   APP_URL: string;
 }
 
@@ -48,7 +48,6 @@ export default {
   async handleCallback(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
 
     if (!code) {
       return Response.redirect(`${env.APP_URL}/?login_error=1`, 302);
@@ -89,27 +88,31 @@ export default {
     const googleUser = await userRes.json();
 
     // Upsert user in D1
-    const existingUser = await env.DB
-      .prepare("SELECT * FROM users WHERE google_id = ?")
-      .bind(googleUser.id)
-      .first();
-
     let isNew = false;
-    if (!existingUser) {
-      await env.DB
-        .prepare(
-          "INSERT INTO users (google_id, email, name, picture) VALUES (?, ?, ?, ?)"
-        )
-        .bind(googleUser.id, googleUser.email, googleUser.name, googleUser.picture || "")
-        .run();
-      isNew = true;
-    } else {
-      await env.DB
-        .prepare(
-          "UPDATE users SET email = ?, name = ?, picture = ? WHERE google_id = ?"
-        )
-        .bind(googleUser.email, googleUser.name, googleUser.picture || "", googleUser.id)
-        .run();
+    try {
+      const existingUser = await env.DB
+        .prepare("SELECT * FROM users WHERE google_id = ?")
+        .bind(googleUser.id)
+        .first();
+
+      if (!existingUser) {
+        await env.DB
+          .prepare(
+            "INSERT INTO users (google_id, email, name, picture) VALUES (?, ?, ?, ?)"
+          )
+          .bind(googleUser.id, googleUser.email, googleUser.name, googleUser.picture || "")
+          .run();
+        isNew = true;
+      } else {
+        await env.DB
+          .prepare(
+            "UPDATE users SET email = ?, name = ?, picture = ? WHERE google_id = ?"
+          )
+          .bind(googleUser.email, googleUser.name, googleUser.picture || "", googleUser.id)
+          .run();
+      }
+    } catch (e) {
+      console.error("D1 error:", e);
     }
 
     // Return user data as JSON for frontend to store in localStorage
@@ -145,8 +148,6 @@ export default {
   }
 
   async handleMe(request: Request, env: Env): Promise<Response> {
-    // For this simple implementation, we rely on localStorage on frontend
-    // This endpoint exists for compatibility
     return new Response(JSON.stringify({ authenticated: true }), {
       headers: { "Content-Type": "application/json" },
     });
