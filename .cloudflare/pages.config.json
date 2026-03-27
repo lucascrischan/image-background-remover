@@ -1,4 +1,6 @@
 {
-  "framework": null,
+  "framework": "",
+  "build_command": "pnpm build",
+  "output_dir": ".next",
   "buildbot_caches": ["none"]
 }

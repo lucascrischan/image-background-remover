@@ -1,5 +1,14 @@
-name = "image-background-remover-api"
-main = "workers/api/remove.ts"
+name = "nextapp"
+main = "workers/api/index.ts"
 compatibility_date = "2026-03-20"
 
 [vars]
+GOOGLE_CLIENT_ID = ""
+GOOGLE_CLIENT_SECRET = ""
+AUTH_SECRET = ""
+APP_URL = "https://aigcprompt.online"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "users-db"
+database_id = ""
