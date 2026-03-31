@@ -1,19 +1,12 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import Image from "next/image";
+import { useState, useCallback, useRef } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 type Status = "idle" | "uploading" | "processing" | "done" | "error";
 
 interface ErrorMessages {
   [key: string]: string;
-}
-
-interface User {
-  email: string;
-  name: string;
-  picture: string;
-  is_new: boolean;
 }
 
 const ERROR_MESSAGES: ErrorMessages = {
@@ -26,65 +19,20 @@ const ERROR_MESSAGES: ErrorMessages = {
 };
 
 export default function Home() {
+  const { data: session } = useSession();
   const [status, setStatus] = useState<Status>("idle");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check for login success on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const loginSuccess = params.get("login");
-    const loginError = params.get("login_error");
-
-    if (loginSuccess === "success") {
-      // User just logged in — read from localStorage
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch {
-          setUser(null);
-        }
-      }
-      // Clean URL
-      window.history.replaceState({}, "", window.location.pathname);
-    } else if (loginError) {
-      setError("登录失败，请重试");
-      window.history.replaceState({}, "", window.location.pathname);
-    } else {
-      // Try to restore session from localStorage on page load
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch {
-          setUser(null);
-        }
-      }
-    }
-  }, []);
-
   const handleLogin = () => {
-    window.location.href = "https://aigcprompt.online/auth/google";
+    signIn("google", { callbackUrl: "/" });
   };
 
-  const handleLogout = async () => {
-    localStorage.removeItem("session");
-    localStorage.removeItem("user");
-    setUser(null);
-    // Call logout endpoint
-    try {
-      await fetch("https://aigcprompt.online/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {
-      // ignore
-    }
+  const handleLogout = () => {
+    signOut({ callbackUrl: "/" });
   };
 
   const validateFile = (file: File): string | null => {
@@ -197,16 +145,18 @@ export default function Home() {
 
           {/* Auth section */}
           <div className="flex items-center gap-3">
-            {user ? (
+            {session?.user ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
-                  <img
-                    src={user.picture}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full"
-                  />
+                  {session.user.image && (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || "User"}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  )}
                   <span className="text-sm text-gray-700 font-medium">
-                    {user.name}
+                    {session.user.name}
                   </span>
                 </div>
                 <button
