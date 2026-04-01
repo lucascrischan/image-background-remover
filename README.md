@@ -108,7 +108,6 @@ Add environment variables in the Vercel dashboard.
 4. Preview the result side-by-side
 5. Click "Download" to save the transparent PNG
 6. xxxx
-8.uhu
 
 ## License
 
